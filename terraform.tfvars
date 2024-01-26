@@ -1,5 +1,5 @@
-admin_password = "Mamasita1991@@@"
+admin_password = "test123"
 location       = "Eastus"
 admin_username = "azureuser"
-computer_name  = "atscale-vm"
-prefix         = "atscale"
+computer_name  = "tj-vm"
+prefix         = "tj"
