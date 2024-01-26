@@ -1,0 +1,5 @@
+admin_password = "Mamasita1991@@@"
+location       = "Eastus"
+admin_username = "azureuser"
+computer_name  = "atscale-vm"
+prefix         = "atscale"
