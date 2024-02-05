@@ -5,7 +5,7 @@ locals {
 ############################################################################################
 # RESOURCE_GROUP CONFIGURATION
 ############################################################################################
-resource "azurerm_resource_group" "atscale_rgroup" {
+resource "azurerm_resource_group" "tj_rgroup" {
   name     = "${var.prefix}-resources"
   location = var.location
 }
@@ -13,11 +13,11 @@ resource "azurerm_resource_group" "atscale_rgroup" {
 ############################################################################################
 # VIRTUAL_NETWORK CONFIGURATION
 ############################################################################################
-resource "azurerm_virtual_network" "atscale_terraform_vnet" {
+resource "azurerm_virtual_network" "tj_terraform_vnet" {
   name                = "${var.prefix}-network"
   address_space       = ["10.0.0.0/16"]
-  location            = azurerm_resource_group.atscale_rgroup.location
-  resource_group_name = azurerm_resource_group.atscale_rgroup.name
+  location            = azurerm_resource_group.tj_rgroup.location
+  resource_group_name = azurerm_resource_group.tj_rgroup.name
 }
 
 ############################################################################################
@@ -25,18 +25,18 @@ resource "azurerm_virtual_network" "atscale_terraform_vnet" {
 ############################################################################################
 resource "azurerm_subnet" "public" {
   name                 = "public"
-  resource_group_name  = azurerm_resource_group.atscale_rgroup.name
-  virtual_network_name = azurerm_virtual_network.atscale_terraform_vnet.name
+  resource_group_name  = azurerm_resource_group.tj_rgroup.name
+  virtual_network_name = azurerm_virtual_network.tj_terraform_vnet.name
   address_prefixes     = ["10.0.2.0/24"]
 }
 
 ############################################################################################
 # NETWORK_INTERFACE CONFIGURATION
 ############################################################################################
-resource "azurerm_network_interface" "atscale_terraform_network_interface" {
+resource "azurerm_network_interface" "tj_terraform_network_interface" {
   name                = "${var.prefix}-nic"
-  location            = azurerm_resource_group.atscale_rgroup.location
-  resource_group_name = azurerm_resource_group.atscale_rgroup.name
+  location            = azurerm_resource_group.tj_rgroup.location
+  resource_group_name = azurerm_resource_group.tj_rgroup.name
 
   ip_configuration {
     name                          = "public"
@@ -46,7 +46,7 @@ resource "azurerm_network_interface" "atscale_terraform_network_interface" {
   }
 
   depends_on = [
-    azurerm_virtual_network.atscale_terraform_vnet,
+    azurerm_virtual_network.tj_terraform_vnet,
     azurerm_public_ip.ubuntu-vm-ip
   ]
 }
@@ -56,10 +56,10 @@ resource "azurerm_network_interface" "atscale_terraform_network_interface" {
 ############################################################################################
 # Get a Static Public IP
 resource "azurerm_public_ip" "ubuntu-vm-ip" {
-  depends_on          = [azurerm_resource_group.atscale_rgroup]
+  depends_on          = [azurerm_resource_group.tj_rgroup]
   name                = "ubuntu-vm-ip"
-  location            = azurerm_resource_group.atscale_rgroup.location
-  resource_group_name = azurerm_resource_group.atscale_rgroup.name
+  location            = azurerm_resource_group.tj_rgroup.location
+  resource_group_name = azurerm_resource_group.tj_rgroup.name
   allocation_method   = "Static"
 }
 
@@ -68,9 +68,9 @@ resource "azurerm_public_ip" "ubuntu-vm-ip" {
 ############################################################################################
 resource "azurerm_virtual_machine" "terraform_vm" {
   name                  = "${var.prefix}-vm"
-  location              = azurerm_resource_group.atscale_rgroup.location
-  resource_group_name   = azurerm_resource_group.atscale_rgroup.name
-  network_interface_ids = [azurerm_network_interface.atscale_terraform_network_interface.id]
+  location              = azurerm_resource_group.tj_rgroup.location
+  resource_group_name   = azurerm_resource_group.tj_rgroup.name
+  network_interface_ids = [azurerm_network_interface.tj_terraform_network_interface.id]
   vm_size               = "Standard_D8s_v4"
   #   admin_username                   = "azureuser"
   delete_os_disk_on_termination    = true
@@ -105,17 +105,17 @@ resource "azurerm_virtual_machine" "terraform_vm" {
 ############################################################################################
 # DATA_DISK CONFIGURATION
 ############################################################################################
-resource "azurerm_managed_disk" "atscale_terraform_data_disk" {
+resource "azurerm_managed_disk" "tj_terraform_data_disk" {
   name                 = "${local.vm_name}-disk1"
-  location             = azurerm_resource_group.atscale_rgroup.location
-  resource_group_name  = azurerm_resource_group.atscale_rgroup.name
+  location             = azurerm_resource_group.tj_rgroup.location
+  resource_group_name  = azurerm_resource_group.tj_rgroup.name
   storage_account_type = "Premium_LRS"
   create_option        = "Empty"
   disk_size_gb         = 256
 }
 
-resource "azurerm_virtual_machine_data_disk_attachment" "atscale_terraform_data_disk_att" {
-  managed_disk_id    = azurerm_managed_disk.atscale_terraform_data_disk.id
+resource "azurerm_virtual_machine_data_disk_attachment" "tj_terraform_data_disk_att" {
+  managed_disk_id    = azurerm_managed_disk.tj_terraform_data_disk.id
   virtual_machine_id = azurerm_virtual_machine.terraform_vm.id
   lun                = "0"
   caching            = "ReadOnly"
@@ -124,10 +124,10 @@ resource "azurerm_virtual_machine_data_disk_attachment" "atscale_terraform_data_
 
 # Create Security Group to access ubuntu
 resource "azurerm_network_security_group" "ubuntu_terraform_nsg" {
-  depends_on          = [azurerm_resource_group.atscale_rgroup]
+  depends_on          = [azurerm_resource_group.tj_rgroup]
   name                = "ubuntu_terraform-vm-nsg"
-  location            = azurerm_resource_group.atscale_rgroup.location
-  resource_group_name = azurerm_resource_group.atscale_rgroup.name
+  location            = azurerm_resource_group.tj_rgroup.location
+  resource_group_name = azurerm_resource_group.tj_rgroup.name
 
   security_rule {
     name                       = "Allow_SSH"
@@ -143,8 +143,8 @@ resource "azurerm_network_security_group" "ubuntu_terraform_nsg" {
   }
 
   security_rule {
-    name                       = "Allow_ATSCALE"
-    description                = "Allow_ATSCALE"
+    name                       = "Allow_tj"
+    description                = "Allow_tj"
     priority                   = 110
     direction                  = "Inbound"
     access                     = "Allow"
@@ -171,7 +171,7 @@ resource "azurerm_network_security_group" "ubuntu_terraform_nsg" {
 
 # Associate the Ubuntu NSG with the subnet
 resource "azurerm_subnet_network_security_group_association" "ubuntu_vm-nsg-association" {
-  depends_on                = [azurerm_resource_group.atscale_rgroup]
+  depends_on                = [azurerm_resource_group.tj_rgroup]
   subnet_id                 = azurerm_subnet.public.id
   network_security_group_id = azurerm_network_security_group.ubuntu_terraform_nsg.id
 }
